@@ -1,6 +1,6 @@
 ---
 title: "Machine Learning Project"
-author: "Chase"
+author: "Chase, Ayushi, Rodrigo"
 date: "4/20/2020"
 output: html_document
 ---
@@ -50,3 +50,28 @@ library(randomForest) #for bagging and random forests
 #read in the data
 wine <- read_csv("winequality-red.csv")
 ```
+
+Research question:
+How to determine which physiochemical properties make wine 'good'?
+
+Splitting the data into test and training data
+```{r}
+set.seed(327) 
+
+#70% for training, 30% for test
+wine_split <- initial_split(wine, 
+                               prop = .7)
+wine_train <- training(wine_split)
+wine_test <- testing(wine_split)
+```
+
+Taking the data out for a walk:
+```{r}
+wine_train%>%
+  ggplot(aes(x = quality))+
+  geom_bar()
+
+```
+
+
+
