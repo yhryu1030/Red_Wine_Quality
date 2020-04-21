@@ -71,7 +71,24 @@ wine_train%>%
   ggplot(aes(x = quality))+
   geom_bar()
 
+
+wine_train%>%
+  ggplot(aes(x = quality))+
+  geom_bar(aes(x = quality))
+
+
 ```
 
+```{r}
+wine_train%>%
+  ggplot(aes(x = quality))+
+  geom_bar()
 
+
+wine_train%>%
+  ggplot(aes(x = quality))+
+  geom_bar(aes(x = quality))
+
+
+```
 
