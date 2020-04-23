@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r, include=FALSE}
 #plotting and exploring
 library(tidyverse) #for plotting and summarizing
 library(GGally) #for nice scatterplot matrix 
@@ -65,16 +65,49 @@ wine_train <- training(wine_split)
 wine_test <- testing(wine_split)
 ```
 
+
 Taking the data out for a walk:
 ```{r}
-wine_train%>%
+graph1 <- wine_train%>%
   ggplot(aes(x = quality))+
   geom_bar()
 
+graph2 <- wine_train%>%
+  ggplot(aes(x = `fixed acidity`, y=density))+
+  geom_point()
 
-wine_train%>%
-  ggplot(aes(x = quality))+
-  geom_bar(aes(x = quality))
+graph3 <- wine_train%>%
+  ggplot(aes(x=density, y=pH))+
+  geom_point()
+
+graph4 <- wine_train%>%
+  ggplot(aes(x=`fixed acidity`, y=pH))+
+  geom_point()
+
+graph5 <- wine_train%>%
+  ggplot(aes(x=`free sulfur dioxide`, y=`total sulfur dioxide`))+
+  geom_point()
+
+graph6 <- wine_train%>%
+  ggplot(aes(x=sulphates, y=alcohol))+
+  geom_point()
+
+graph7 <- wine_train%>%
+  ggplot(aes(x=`residual sugar`, y=density))+
+  geom_point()
+
+graph8 <- wine_train%>%
+  ggplot(aes(x=chlorides, y=density))+
+  geom_point()
+
+graph9 <- wine_train%>%
+  ggplot(aes(x=alcohol, y=chlorides))+
+  geom_point()
+
+grid.arrange(graph1, graph2, graph3, nrow=1)
+grid.arrange(graph4, graph5, graph6, nrow=2)
+grid.arrange(graph7, graph8, graph9, nrow=3)
+
 
 
 ```
