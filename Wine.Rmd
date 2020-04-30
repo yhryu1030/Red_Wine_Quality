@@ -29,6 +29,7 @@ library(scales) #for nice labels on graphs
 library(gridExtra) #for arranging plots
 library(broom) #for nice model output
 library(janitor) #for nice names
+library(formattable)
 
 #data
 library(ISLR) #for data
@@ -51,6 +52,9 @@ library(randomForest) #for bagging and random forests
 wine <- read_csv("winequality-red.csv")
 ```
 
+
+
+
 Research question:
 How to determine which physiochemical properties make wine 'good'?
 
@@ -64,6 +68,23 @@ wine_split <- initial_split(wine,
 wine_train <- training(wine_split)
 wine_test <- testing(wine_split)
 ```
+
+```{r}
+mod_rec <- 
+  recipe(quality ~., data = wine_train)
+```
+
+```{r}
+final_wine_train <- mod_rec %>%
+  prep() %>%
+  bake(new_data = wine_train)
+
+final_wine_test <- mod_rec %>% 
+  prep() %>% 
+  bake(new_data = wine_test)
+```
+
+
 
 
 Taking the data out for a walk:
@@ -112,3 +133,150 @@ grid.arrange(graph7, graph8, graph9, nrow=3)
 
 ```
 
+#Fitting a KNN Model
+```{r}
+knn_rec <- recipe(quality ~ ., data = wine_train) %>%
+  
+  
+  step_center(all_numeric(), -all_outcomes()) %>%
+  step_scale(all_numeric(), -all_outcomes()) %>% 
+  step_dummy(all_nominal())
+
+set.seed(253)
+wine_knn <- train(
+  knn_rec, 
+  data = wine_train,
+  method = "knn", 
+  trControl = trainControl(method = "cv", number = 5), 
+  tuneGrid = data.frame(k = c(5, 10,50, 100, 200, 300)))
+
+```
+
+#Results with Optimal K Value = 50
+```{r}
+wine_knn$results
+
+wine_knn$bestTune$k
+
+wine_knn%>%
+  ggplot() +
+  geom_line(aes(x=k, y=RMSE), color="blue") 
+```
+
+#With the best k value from above, I compute the RMSE Value (remove this: predicted quality) for the wine_test data
+
+```{r}
+knn_50 <- train(
+  knn_rec, 
+  data = wine_train,
+  method = "knn",
+  tuneGrid = data.frame(k = 50),
+  trControl = trainControl(method = "cv", number = 5),
+  na.action = na.omit)
+
+
+#i do not really understand this(i got this from previous HW's)
+wine_test <-wine_test %>% 
+  mutate(yhat_50 = predict(knn_50, newdata=wine_test))
+knn_50$results
+
+
+```
+
+#Test RMSE for the best Model
+
+```{r}
+RMSE_knn<-final_wine_test %>% 
+  mutate(pred_quality = predict(knn_50, newdata = wine_test)) %>% 
+  summarize(RMSE = sqrt(mean((quality) - (pred_quality))^2))#esther does not have exp 
+
+
+RMSE_knn
+```
+
+
+
+
+
+
+
+
+```{r}
+set.seed(253)
+wine_lasso <- train(
+  quality ~ .,
+  data = wine_train, 
+  method = "glmnet",
+  trControl = trainControl(method = "cv", 
+                           number = 5),
+  tuneGrid = data.frame(alpha = 1, 
+                        lambda = 10^seq(-3, -1, length = 50)),
+  na.action = na.omit)
+```
+
+```{r}
+wine_lasso$results
+
+wine_lasso$bestTune$lambda
+
+wine_lasso%>%
+  ggplot() +
+  geom_line(aes(x=lambda, y=RMSE), color="blue") 
+```
+
+
+RMSE for best Model
+
+```{r}
+set.seed(253)
+wine_lasso_best <- train(
+  quality ~ .,
+  data = wine_train, 
+  method = "glmnet",
+  trControl = trainControl(method = "cv", 
+                           number = 5),
+  tuneGrid = data.frame(alpha = 1, 
+                        lambda = 0.001),
+  na.action = na.omit)
+
+#i do not really understand this(i got this from previous HW's)
+wine_test <-wine_test %>% 
+  mutate(yhat_0.001 = predict(wine_lasso_best, newdata=wine_test))
+wine_lasso_best$results
+
+
+coefficients(wine_lasso_best$finalModel, 0.001)
+
+
+
+```
+
+Test RMSE for best Model
+
+```{r}
+
+RMSE_lasso<-final_wine_test %>% 
+  mutate(pred_quality = predict(wine_lasso_best, newdata = wine_test)) %>% 
+  summarize(RMSE = sqrt(mean(((quality) - (pred_quality))^2)))
+
+RMSE_lasso
+
+
+```
+
+
+```{r}
+
+RMSE_ALL_MODELS <-data.frame(RMSE_lasso, RMSE_knn)
+
+
+RMSE_ALL_MODELS<- RMSE_ALL_MODELS%>%
+  rename(
+    `Lasso RMSE` =RMSE,
+    `KNN RMSE` =RMSE.1)
+
+
+formattable(RMSE_ALL_MODELS)
+
+
+```
