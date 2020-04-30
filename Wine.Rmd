@@ -280,3 +280,70 @@ formattable(RMSE_ALL_MODELS)
 
 
 ```
+
+
+# Linear Model
+```{r}
+set.seed(86)
+
+linear_model <- lm(quality ~ .,
+                   data = wine_train)
+
+resid1 <-
+  augment(linear_model) %>% 
+  ggplot(aes(x = .fitted, y = .resid)) +
+  geom_point(size = .5, alpha = .5) +
+  geom_smooth(se = FALSE) +
+  geom_hline(yintercept = 0, color="red")
+
+resid2 <-
+  augment(linear_model) %>% 
+  ggplot(aes(sample = .resid)) +
+  geom_qq() +
+  geom_qq_line()
+
+grid.arrange(resid1, resid2, nrow = 1)  
+```
+
+# Logistic Model
+```{r}
+set.seed(86)
+
+log_model <- lm(log(quality) ~ .,
+                data = wine_train)
+
+log_resid1 <-
+  augment(log_model) %>% 
+  ggplot(aes(x = .fitted, y = .resid)) +
+  geom_point(size = .5, alpha = .5) +
+  geom_smooth(se = FALSE) +
+  geom_hline(yintercept = 0, color="red")
+
+log_resid2 <-
+  augment(log_model) %>% 
+  ggplot(aes(sample = .resid)) +
+  geom_qq() +
+  geom_qq_line()
+
+grid.arrange(log_resid1, log_resid2, nrow = 1)  
+```
+
+# Random Forest
+```{r}
+set.seed(86)
+
+wine_randf <- train(
+  quality ~ .,
+  data = wine_train,
+  method = "rf",
+  trControl = trainControl(method = "oob"),
+  tuneGrid = data.frame(mtry = 11),
+  ntree = 100,
+  nodesize = 5,
+  na.action = na.omit
+)
+```
+
+```{r}
+wine_randf$results
+```
